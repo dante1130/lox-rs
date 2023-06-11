@@ -105,6 +105,20 @@ impl Scanner {
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
+                } else if self.match_char('*') {
+                    while self.peek() != '*' && self.peek_next() != '/' && !self.is_at_end() {
+                        if self.peek() == '\n' {
+                            self.line += 1;
+                        }
+                        self.advance();
+                    }
+
+                    if self.is_at_end() {
+                        error::error(self.line, "Unterminated block comment.");
+                    } else {
+                        self.advance();
+                        self.advance();
+                    }
                 } else {
                     self.add_token(TokenType::Slash);
                 }
