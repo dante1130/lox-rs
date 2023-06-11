@@ -1,11 +1,9 @@
 mod error;
-mod scanner;
-mod token;
-mod token_type;
+mod lexer;
 
 use std::io::Write;
 
-use scanner::Scanner;
+use lexer::scanner::Scanner;
 
 pub fn run(args: Vec<String>) {
     if args.len() > 2 {

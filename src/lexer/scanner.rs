@@ -1,8 +1,10 @@
 use std::{any::Any, collections::HashMap};
 
-use crate::{error, token::Token, token_type::TokenType};
+use lazy_static::lazy_static;
 
-lazy_static::lazy_static! {
+use crate::{error, lexer::token::Token, lexer::token_type::TokenType};
+
+lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
         let mut m = HashMap::new();
         m.insert("and", TokenType::And);

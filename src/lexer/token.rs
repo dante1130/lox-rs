@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::token_type::TokenType;
+use crate::lexer::token_type::TokenType;
 
 pub struct Token {
     pub token_type: TokenType,
