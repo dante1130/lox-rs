@@ -1,21 +1,39 @@
+mod ast;
 mod error;
 mod lexer;
 
 use std::io::Write;
 
-use lexer::scanner::Scanner;
+use ast::{
+    ast_printer::AstPrinter,
+    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
+};
+use lexer::{scanner::Scanner, token::Token, token_type::TokenType};
 
 pub fn run(args: Vec<String>) {
-    if args.len() > 2 {
-        println!("Usage: rslox [script]");
-        std::process::exit(64);
-    }
+    // if args.len() > 2 {
+    //     println!("Usage: rslox [script]");
+    //     std::process::exit(64);
+    // }
+    //
+    // if args.len() == 2 {
+    //     run_file(args[0].clone());
+    // } else {
+    //     run_prompt();
+    // }
 
-    if args.len() == 2 {
-        run_file(args[0].clone());
-    } else {
-        run_prompt();
-    }
+    let expression = Expr::Binary(BinaryExpr::new(
+        Token::new(TokenType::Star, String::from("*"), None, 1),
+        Expr::Unary(UnaryExpr::new(
+            Token::new(TokenType::Minus, String::from("-"), None, 1),
+            Expr::Literal(LiteralExpr::new(Box::new(123.0))),
+        )),
+        Expr::Grouping(GroupingExpr::new(Expr::Literal(LiteralExpr::new(
+            Box::new(45.67),
+        )))),
+    ));
+
+    println!("{}", AstPrinter {}.print(&expression));
 }
 
 fn run_file(path: String) {
