@@ -1,6 +1,4 @@
-use std::any::Any;
-
-use crate::{ast::visitor::Visitor, lexer::token::Token};
+use crate::{ast::visitor::Visitor, lexer::token::Token, value::Value};
 
 pub enum Expr {
     Binary(BinaryExpr),
@@ -31,7 +29,7 @@ pub struct GroupingExpr {
 }
 
 pub struct LiteralExpr {
-    pub value: Option<Box<dyn Any>>,
+    pub value: Option<Value>,
 }
 
 pub struct UnaryExpr {
@@ -58,7 +56,7 @@ impl GroupingExpr {
 }
 
 impl LiteralExpr {
-    pub fn new(value: Box<dyn Any>) -> Self {
+    pub fn new(value: Value) -> Self {
         Self { value: Some(value) }
     }
 }
@@ -71,7 +69,6 @@ impl UnaryExpr {
         }
     }
 }
-
 
 impl From<BinaryExpr> for Expr {
     fn from(expr: BinaryExpr) -> Self {

@@ -1,6 +1,7 @@
 mod ast;
 mod error;
 mod lexer;
+mod value;
 
 use std::io::Write;
 
@@ -9,6 +10,8 @@ use ast::{
     expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
 };
 use lexer::{scanner::Scanner, token::Token, token_type::TokenType};
+
+use crate::value::Value;
 
 pub fn run(args: Vec<String>) {
     // if args.len() > 2 {
@@ -26,10 +29,10 @@ pub fn run(args: Vec<String>) {
         Token::new(TokenType::Star, String::from("*"), None, 1),
         Expr::Unary(UnaryExpr::new(
             Token::new(TokenType::Minus, String::from("-"), None, 1),
-            Expr::Literal(LiteralExpr::new(Box::new(123.0))),
+            Expr::Literal(LiteralExpr::new(Value::Number(123.0))),
         )),
         Expr::Grouping(GroupingExpr::new(Expr::Literal(LiteralExpr::new(
-            Box::new(45.67),
+            Value::Number(45.67),
         )))),
     ));
 

@@ -1,8 +1,8 @@
-use std::{any::Any, collections::HashMap};
+use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
-use crate::{error, lexer::token::Token, lexer::token_type::TokenType};
+use crate::{error, lexer::token::Token, lexer::token_type::TokenType, value::Value};
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
@@ -185,7 +185,7 @@ impl Scanner {
         self.advance();
 
         let string = self.source[(self.start + 1)..(self.current - 1)].to_string();
-        self.add_token_literal(TokenType::String, Some(Box::new(string)));
+        self.add_token_literal(TokenType::String, Some(Value::String(string)));
     }
 
     fn number(&mut self) {
@@ -205,7 +205,7 @@ impl Scanner {
             .parse::<f64>()
             .unwrap();
 
-        self.add_token_literal(TokenType::Number, Some(Box::new(number)));
+        self.add_token_literal(TokenType::Number, Some(Value::Number(number)));
     }
 
     fn identifier(&mut self) {
@@ -223,7 +223,7 @@ impl Scanner {
         self.add_token_literal(token_type, None);
     }
 
-    fn add_token_literal(&mut self, token_type: TokenType, literal: Option<Box<dyn Any>>) {
+    fn add_token_literal(&mut self, token_type: TokenType, literal: Option<Value>) {
         let text = &self.source[self.start..self.current];
         self.tokens
             .push(Token::new(token_type, text.to_owned(), literal, self.line));

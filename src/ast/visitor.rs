@@ -7,4 +7,3 @@ pub trait Visitor<T> {
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> T;
 }
 
-

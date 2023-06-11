@@ -1,4 +1,7 @@
-use super::{expr::{Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr}, visitor::Visitor};
+use super::{
+    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
+    visitor::Visitor,
+};
 
 pub struct AstPrinter;
 
@@ -24,15 +27,7 @@ impl Visitor<String> for AstPrinter {
 
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> String {
         match &expr.value {
-            Some(literal) => {
-                if literal.is::<String>() {
-                    literal.downcast_ref::<String>().unwrap().to_string()
-                } else if literal.is::<f64>() {
-                    format!("{}", literal.downcast_ref::<f64>().unwrap())
-                } else {
-                    String::from("")
-                }
-            },
+            Some(literal) => literal.to_string(),
             None => "nil".to_string(),
         }
     }
