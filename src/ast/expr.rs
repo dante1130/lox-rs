@@ -1,5 +1,6 @@
 use crate::{ast::visitor::Visitor, lexer::token::Token, value::Value};
 
+#[derive(Clone)]
 pub enum Expr {
     Binary(BinaryExpr),
     Grouping(GroupingExpr),
@@ -18,20 +19,24 @@ impl Expr {
     }
 }
 
+#[derive(Clone)]
 pub struct BinaryExpr {
     pub operator: Token,
     pub left: Box<Expr>,
     pub right: Box<Expr>,
 }
 
+#[derive(Clone)]
 pub struct GroupingExpr {
     pub expression: Box<Expr>,
 }
 
+#[derive(Clone)]
 pub struct LiteralExpr {
     pub value: Option<Value>,
 }
 
+#[derive(Clone)]
 pub struct UnaryExpr {
     pub operator: Token,
     pub right: Box<Expr>,

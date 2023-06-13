@@ -46,7 +46,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    pub fn scan_tokens(&mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -59,7 +59,7 @@ impl Scanner {
             self.line,
         ));
 
-        &self.tokens
+        self.tokens.clone()
     }
 
     fn scan_token(&mut self) {
