@@ -1,11 +1,13 @@
 mod ast;
 mod error;
+mod interpreter;
 mod lexer;
 mod value;
 
 use std::io::Write;
 
-use ast::{ast_printer::AstPrinter, parser::Parser};
+use ast::parser::Parser;
+use interpreter::Interpreter;
 use lexer::scanner::Scanner;
 
 pub fn run(args: Vec<String>) {
@@ -34,6 +36,10 @@ fn run_file(path: String) {
 
     if error::had_error() {
         std::process::exit(65);
+    }
+
+    if error::had_runtime_error() {
+        std::process::exit(70);
     }
 }
 
@@ -74,5 +80,5 @@ fn run_source(source: String) {
         return;
     }
 
-    println!("{}", AstPrinter {}.print(&expression.unwrap()));
+    Interpreter.interpret(&expression.unwrap());
 }

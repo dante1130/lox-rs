@@ -1,14 +1,11 @@
 use crate::{
     ast::expr::{GroupingExpr, LiteralExpr},
-    error,
+    error::{self, ParseError},
     lexer::{token::Token, token_type::TokenType},
     value::Value,
 };
 
 use super::expr::{BinaryExpr, Expr, UnaryExpr};
-
-#[derive(Clone)]
-pub struct ParseError;
 
 pub struct Parser {
     tokens: Vec<Token>,
