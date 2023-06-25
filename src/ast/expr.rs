@@ -1,4 +1,4 @@
-use crate::{ast::visitor::Visitor, lexer::token::Token, value::Value};
+use crate::{lexer::token::Token, value::Value, visitor::Visitor};
 
 #[derive(Clone)]
 pub enum Expr {
@@ -98,4 +98,3 @@ impl From<UnaryExpr> for Expr {
         Expr::Unary(expr)
     }
 }
-

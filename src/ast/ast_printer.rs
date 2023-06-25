@@ -1,7 +1,6 @@
-use super::{
-    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
-    visitor::Visitor,
-};
+use crate::visitor::Visitor;
+
+use super::expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr};
 
 pub struct AstPrinter;
 

@@ -1,11 +1,9 @@
 use crate::{
-    ast::{
-        expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
-        visitor::Visitor,
-    },
+    ast::expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
     error::RuntimeError,
     lexer::token_type::TokenType,
     value::Value,
+    visitor::Visitor,
 };
 
 pub struct Interpreter;

@@ -3,6 +3,7 @@ mod error;
 mod interpreter;
 mod lexer;
 mod value;
+mod visitor;
 
 use std::io::Write;
 
