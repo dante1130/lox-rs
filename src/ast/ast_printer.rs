@@ -28,7 +28,7 @@ impl Visitor<String> for AstPrinter {
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> String {
         match &expr.value {
             Some(literal) => literal.to_string(),
-            None => "nil".to_string(),
+            None => String::from("nil"),
         }
     }
 

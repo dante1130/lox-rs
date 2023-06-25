@@ -225,8 +225,12 @@ impl Scanner {
 
     fn add_token_literal(&mut self, token_type: TokenType, literal: Option<Value>) {
         let text = &self.source[self.start..self.current];
-        self.tokens
-            .push(Token::new(token_type, text.to_owned(), literal, self.line));
+        self.tokens.push(Token::new(
+            token_type,
+            String::from(text),
+            literal,
+            self.line,
+        ));
     }
 
     fn is_at_end(&self) -> bool {

@@ -51,28 +51,28 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l > r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::GreaterEqual => match (left, right) {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l >= r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::Less => match (left, right) {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l < r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::LessEqual => match (left, right) {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l <= r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::BangEqual => Ok(Value::Bool(!is_equal(&left, &right))),
@@ -81,7 +81,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l - r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::Plus => match (left, right) {
@@ -89,21 +89,30 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 (Value::String(l), Value::String(r)) => Ok(Value::String(l + &r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be two numbers or two strings.".to_owned(),
+                    String::from("Operands must be two numbers or two strings."),
                 )),
             },
             TokenType::Slash => match (left, right) {
-                (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l / r)),
+                (Value::Number(l), Value::Number(r)) => {
+                    if r == 0.0 {
+                        return Err(RuntimeError::new(
+                            expr.operator.clone(),
+                            String::from("Division by zero."),
+                        ));
+                    }
+
+                    Ok(Value::Number(l / r))
+                }
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             TokenType::Star => match (left, right) {
                 (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l * r)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operands must be numbers.".to_owned(),
+                    String::from("Operands must be numbers."),
                 )),
             },
             _ => Ok(Value::Nil),
@@ -127,7 +136,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 Value::Number(n) => Ok(Value::Number(-n)),
                 _ => Err(RuntimeError::new(
                     expr.operator.clone(),
-                    "Operand must be a number.".to_owned(),
+                    String::from("Operand must be a number."),
                 )),
             },
             _ => Ok(Value::Nil),
