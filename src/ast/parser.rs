@@ -87,34 +87,44 @@ impl Parser {
             Err(err) => return Err(err),
         };
 
-        let initializer = match self.match_token(&[TokenType::Equal]) {
-            true => Some(self.expression().unwrap()),
-            false => None,
+        let initializer = if self.match_token(&[TokenType::Equal]) {
+            Some(match self.expression() {
+                Ok(expr) => expr,
+                Err(err) => return Err(err),
+            })
+        } else {
+            None
         };
 
         match self.consume(
             TokenType::Semicolon,
             "Expect ';' after variable declaration.",
         ) {
-            Ok(_) => {}
-            Err(err) => return Err(err),
+            Ok(_) => Ok(Stmt::Var(VarStmt::new(name, initializer))),
+            Err(err) => Err(err),
         }
-
-        Ok(Stmt::Var(VarStmt::new(name, initializer)))
     }
 
     fn print_statement(&mut self) -> Result<Stmt, ParseError> {
-        let expr = self.expression();
+        let expr = match self.expression() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+
         match self.consume(TokenType::Semicolon, "Expect ';' after value.") {
-            Ok(_) => Ok(Stmt::Print(PrintStmt::new(expr.unwrap()))),
+            Ok(_) => Ok(Stmt::Print(PrintStmt::new(expr))),
             Err(err) => Err(err),
         }
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
-        let expr = self.expression();
+        let expr = match self.expression() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+
         match self.consume(TokenType::Semicolon, "Expect ';' after expression.") {
-            Ok(_) => Ok(Stmt::Expression(ExpressionStmt::new(expr.unwrap()))),
+            Ok(_) => Ok(Stmt::Expression(ExpressionStmt::new(expr))),
             Err(err) => Err(err),
         }
     }
@@ -138,7 +148,7 @@ impl Parser {
             };
 
             if let Expr::Variable(var) = expr {
-                return Ok(Expr::Assign(AssignExpr::new(var.name, value)))
+                return Ok(Expr::Assign(AssignExpr::new(var.name, value)));
             }
 
             error::error_token(&equals, "Invalid assignment target.")
@@ -256,9 +266,12 @@ impl Parser {
         }
 
         if self.match_token(&[TokenType::Number, TokenType::String]) {
-            return Ok(Expr::Literal(LiteralExpr::new(
-                self.previous().literal.clone().unwrap(),
-            )));
+            let value = match self.previous().literal.clone() {
+                Some(value) => value,
+                None => return Err(self.error(self.peek(), "Expected literal value.")),
+            };
+
+            return Ok(Expr::Literal(LiteralExpr::new(value)));
         }
 
         if self.match_token(&[TokenType::LeftParen]) {
@@ -266,10 +279,12 @@ impl Parser {
                 Ok(expr) => expr,
                 Err(err) => return Err(err),
             };
+
             match self.consume(TokenType::RightParen, "Expected ')' after expression.") {
                 Ok(_) => {}
                 Err(err) => return Err(err),
             }
+
             return Ok(Expr::Grouping(GroupingExpr::new(expr)));
         }
 
