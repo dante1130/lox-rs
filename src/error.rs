@@ -3,7 +3,7 @@ use crate::lexer::{token::Token, token_type::TokenType};
 static mut HAD_ERROR: bool = false;
 static mut HAD_RUNTIME_ERROR: bool = false;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ParseError;
 
 #[derive(Debug)]

@@ -5,7 +5,10 @@ use crate::{
     value::Value,
 };
 
-use super::expr::{BinaryExpr, Expr, UnaryExpr};
+use super::{
+    expr::{AssignExpr, BinaryExpr, Expr, UnaryExpr, VariableExpr},
+    statement::{ExpressionStmt, PrintStmt, Stmt, VarStmt},
+};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -17,12 +20,131 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Expr> {
-        self.expression().ok()
+    pub fn parse(&mut self) -> Vec<Stmt> {
+        let mut statements = Vec::new();
+
+        while !self.is_at_end() {
+            if let Some(stmt) = self.declaration() {
+                statements.push(stmt)
+            }
+        }
+
+        statements
+    }
+
+    fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_token(&[TokenType::Print]) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().token_type == TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().token_type {
+                TokenType::Class
+                | TokenType::Fun
+                | TokenType::Var
+                | TokenType::For
+                | TokenType::If
+                | TokenType::While
+                | TokenType::Print
+                | TokenType::Return => return,
+                _ => {}
+            }
+
+            self.advance();
+        }
+    }
+
+    fn declaration(&mut self) -> Option<Stmt> {
+        if self.match_token(&[TokenType::Var]) {
+            return match self.var_declaration() {
+                Ok(stmt) => Some(stmt),
+                Err(_) => None,
+            };
+        }
+
+        match self.statement() {
+            Ok(stmt) => Some(stmt),
+            Err(_) => {
+                self.synchronize();
+                None
+            }
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+        let name = match self.consume(TokenType::Identifier, "Expect variable name.") {
+            Ok(token) => token.clone(),
+            Err(err) => return Err(err),
+        };
+
+        let initializer = match self.match_token(&[TokenType::Equal]) {
+            true => Some(self.expression().unwrap()),
+            false => None,
+        };
+
+        match self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        ) {
+            Ok(_) => {}
+            Err(err) => return Err(err),
+        }
+
+        Ok(Stmt::Var(VarStmt::new(name, initializer)))
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, ParseError> {
+        let expr = self.expression();
+        match self.consume(TokenType::Semicolon, "Expect ';' after value.") {
+            Ok(_) => Ok(Stmt::Print(PrintStmt::new(expr.unwrap()))),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
+        let expr = self.expression();
+        match self.consume(TokenType::Semicolon, "Expect ';' after expression.") {
+            Ok(_) => Ok(Stmt::Expression(ExpressionStmt::new(expr.unwrap()))),
+            Err(err) => Err(err),
+        }
     }
 
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, ParseError> {
+        let expr_result = self.equality();
+        let expr = match expr_result.clone() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+
+        if self.match_token(&[TokenType::Equal]) {
+            let equals = self.previous().clone();
+            let value = match self.assignment() {
+                Ok(value) => value,
+                Err(err) => return Err(err),
+            };
+
+            if let Expr::Variable(var) = expr {
+                return Ok(Expr::Assign(AssignExpr::new(var.name, value)))
+            }
+
+            error::error_token(&equals, "Invalid assignment target.")
+        }
+
+        expr_result
     }
 
     fn equality(&mut self) -> Result<Expr, ParseError> {
@@ -149,6 +271,10 @@ impl Parser {
                 Err(err) => return Err(err),
             }
             return Ok(Expr::Grouping(GroupingExpr::new(expr)));
+        }
+
+        if self.match_token(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(VariableExpr::new(self.previous().clone())));
         }
 
         Err(self.error(self.peek(), "Expected expression."))

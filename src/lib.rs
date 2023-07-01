@@ -1,9 +1,11 @@
 mod ast;
+mod environment;
 mod error;
+mod expr_visitor;
 mod interpreter;
 mod lexer;
+mod stmt_visitor;
 mod value;
-mod visitor;
 
 use std::io::Write;
 
@@ -81,5 +83,5 @@ fn run_source(source: String) {
         return;
     }
 
-    Interpreter.interpret(&expression.unwrap());
+    Interpreter::new().interpret(&expression);
 }

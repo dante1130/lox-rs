@@ -1,22 +1,38 @@
 use crate::{
-    ast::expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
+    ast::{
+        expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
+        statement::{ExpressionStmt, PrintStmt, Stmt, VarStmt},
+    },
+    environment::Environment,
     error::RuntimeError,
+    expr_visitor::ExprVisitor,
     lexer::token_type::TokenType,
+    stmt_visitor::StmtVisitor,
     value::Value,
-    visitor::Visitor,
 };
 
-pub struct Interpreter;
+pub struct Interpreter {
+    pub environment: Environment,
+}
 
 impl Interpreter {
-    pub fn interpret(&self, expr: &Expr) {
-        match self.evaluate(expr) {
-            Ok(value) => println!("{}", value),
-            Err(error) => println!("{}", error),
+    pub fn new() -> Self {
+        Self {
+            environment: Environment::new(),
         }
     }
 
-    fn evaluate(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) {
+        for stmt in statements {
+            self.execute(stmt);
+        }
+    }
+
+    fn execute(&mut self, stmt: &Stmt) {
+        stmt.accept(self);
+    }
+
+    fn evaluate(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         expr.accept(self)
     }
 }
@@ -39,8 +55,37 @@ fn is_equal(left: &Value, right: &Value) -> bool {
     }
 }
 
-impl Visitor<Result<Value, RuntimeError>> for Interpreter {
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Value, RuntimeError> {
+impl StmtVisitor<()> for Interpreter {
+    fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) {
+        let _ = self.evaluate(&stmt.expression);
+    }
+
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) {
+        if let Ok(value) = self.evaluate(&stmt.expression) {
+            println!("{}", value)
+        }
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) {
+        let value = match &stmt.initializer {
+            Some(expr) => self.evaluate(expr).unwrap(),
+            None => Value::Nil,
+        };
+
+        self.environment.define(stmt.name.lexeme.clone(), value);
+    }
+}
+
+impl ExprVisitor<Result<Value, RuntimeError>> for Interpreter {
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Result<Value, RuntimeError> {
+        let value = self.evaluate(&expr.value).unwrap();
+        match self.environment.assign(expr.name.clone(), value.clone()) {
+            Ok(_) => Ok(value),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Result<Value, RuntimeError> {
         let left = self.evaluate(&expr.left).unwrap();
         let right = self.evaluate(&expr.right).unwrap();
 
@@ -117,7 +162,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Value, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expr: &GroupingExpr) -> Result<Value, RuntimeError> {
         self.evaluate(&expr.expression)
     }
 
@@ -125,7 +170,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
         Ok(expr.value.clone().unwrap_or(Value::Nil))
     }
 
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Value, RuntimeError> {
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<Value, RuntimeError> {
         let right = self.evaluate(&expr.right).unwrap();
 
         match expr.operator.token_type {
@@ -139,5 +184,9 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
             },
             _ => Ok(Value::Nil),
         }
+    }
+
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Value, RuntimeError> {
+        self.environment.get(expr.name.clone())
     }
 }
