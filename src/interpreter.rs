@@ -57,18 +57,28 @@ fn is_equal(left: &Value, right: &Value) -> bool {
 
 impl StmtVisitor<()> for Interpreter {
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) {
-        let _ = self.evaluate(&stmt.expression);
+        match self.evaluate(&stmt.expression) {
+            Ok(_) => {}
+            Err(e) => println!("{}", e),
+        }
     }
 
     fn visit_print_stmt(&mut self, stmt: &PrintStmt) {
-        if let Ok(value) = self.evaluate(&stmt.expression) {
-            println!("{}", value)
+        match self.evaluate(&stmt.expression) {
+            Ok(value) => println!("{}", value),
+            Err(e) => println!("{}", e),
         }
     }
 
     fn visit_var_stmt(&mut self, stmt: &VarStmt) {
         let value = match &stmt.initializer {
-            Some(expr) => self.evaluate(expr).unwrap(),
+            Some(expr) => match self.evaluate(expr) {
+                Ok(value) => value,
+                Err(e) => {
+                    println!("{}", e);
+                    Value::Nil
+                }
+            },
             None => Value::Nil,
         };
 
