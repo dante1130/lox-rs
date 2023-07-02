@@ -6,6 +6,7 @@ pub enum Expr {
     Binary(BinaryExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
+    Logical(LogicalExpr),
     Unary(UnaryExpr),
     Variable(VariableExpr),
 }
@@ -17,6 +18,7 @@ impl Expr {
             Expr::Binary(expr) => visitor.visit_binary_expr(expr),
             Expr::Grouping(expr) => visitor.visit_grouping_expr(expr),
             Expr::Literal(expr) => visitor.visit_literal_expr(expr),
+            Expr::Logical(expr) => visitor.visit_logical_expr(expr),
             Expr::Unary(expr) => visitor.visit_unary_expr(expr),
             Expr::Variable(expr) => visitor.visit_variable_expr(expr),
         }
@@ -44,6 +46,13 @@ pub struct GroupingExpr {
 #[derive(Clone)]
 pub struct LiteralExpr {
     pub value: Option<Value>,
+}
+
+#[derive(Clone)]
+pub struct LogicalExpr {
+    pub operator: Token,
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -90,6 +99,16 @@ impl LiteralExpr {
     }
 }
 
+impl LogicalExpr {
+    pub fn new(operator: Token, left: Expr, right: Expr) -> Self {
+        Self {
+            operator,
+            left: Box::new(left),
+            right: Box::new(right),
+        }
+    }
+}
+
 impl UnaryExpr {
     pub fn new(operator: Token, right: Expr) -> Self {
         Self {
@@ -126,6 +145,12 @@ impl From<GroupingExpr> for Expr {
 impl From<LiteralExpr> for Expr {
     fn from(expr: LiteralExpr) -> Self {
         Expr::Literal(expr)
+    }
+}
+
+impl From<LogicalExpr> for Expr {
+    fn from(expr: LogicalExpr) -> Self {
+        Expr::Logical(expr)
     }
 }
 

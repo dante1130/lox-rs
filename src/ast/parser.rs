@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    expr::{AssignExpr, BinaryExpr, Expr, UnaryExpr, VariableExpr},
+    expr::{AssignExpr, BinaryExpr, Expr, LogicalExpr, UnaryExpr, VariableExpr},
     statement::{BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt},
 };
 
@@ -33,6 +33,10 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_token(&[TokenType::If]) {
+            return self.if_statement();
+        }
+
         if self.match_token(&[TokenType::Print]) {
             return self.print_statement();
         }
@@ -192,7 +196,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, ParseError> {
-        let expr_result = self.equality();
+        let expr_result = self.or();
         let expr = match expr_result.clone() {
             Ok(expr) => expr,
             Err(err) => return Err(err),
@@ -210,6 +214,54 @@ impl Parser {
             }
 
             error::error_token(&equals, "Invalid assignment target.")
+        }
+
+        expr_result
+    }
+
+    fn or(&mut self) -> Result<Expr, ParseError> {
+        let mut expr_result = self.and();
+        let expr = match expr_result.clone() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+
+        while self.match_token(&[TokenType::Or]) {
+            let operator = self.previous().clone();
+            let right = match self.and() {
+                Ok(right) => right,
+                Err(err) => return Err(err),
+            };
+
+            expr_result = Ok(Expr::Logical(LogicalExpr::new(
+                operator,
+                expr.clone(),
+                right,
+            )));
+        }
+
+        expr_result
+    }
+
+    fn and(&mut self) -> Result<Expr, ParseError> {
+        let mut expr_result = self.equality();
+        let expr = match expr_result.clone() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+
+        while self.match_token(&[TokenType::And]) {
+            let operator = self.previous().clone();
+            let right = match self.equality() {
+                Ok(right) => right,
+                Err(err) => return Err(err),
+            };
+
+            expr_result = Ok(Expr::Logical(LogicalExpr::new(
+                operator,
+                expr.clone(),
+                right,
+            )));
         }
 
         expr_result

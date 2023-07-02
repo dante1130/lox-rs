@@ -1,6 +1,9 @@
 use crate::{
     ast::{
-        expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
+        expr::{
+            AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr,
+            VariableExpr,
+        },
         statement::{BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt},
     },
     environment::Environment,
@@ -209,6 +212,23 @@ impl ExprVisitor<Result<Value, RuntimeError>> for Interpreter {
 
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Value, RuntimeError> {
         Ok(expr.value.clone().unwrap_or(Value::Nil))
+    }
+
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Result<Value, RuntimeError> {
+        let left = match self.evaluate(&expr.left) {
+            Ok(value) => value,
+            Err(error) => return Err(error),
+        };
+
+        if expr.operator.token_type == TokenType::Or {
+            if is_truthy(&left) {
+                return Ok(left);
+            }
+        } else if !is_truthy(&left) {
+            return Ok(left);
+        }
+
+        self.evaluate(&expr.right)
     }
 
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Result<Value, RuntimeError> {
