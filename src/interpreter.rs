@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
-        statement::{ExpressionStmt, PrintStmt, Stmt, VarStmt},
+        statement::{BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt},
     },
     environment::Environment,
     error::RuntimeError,
@@ -35,6 +35,18 @@ impl Interpreter {
     fn evaluate(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         expr.accept(self)
     }
+
+    fn execute_block(&mut self, statements: &Vec<Stmt>, environment: Environment) {
+        let previous = self.environment.clone();
+
+        self.environment = environment;
+
+        for stmt in statements {
+            self.execute(stmt);
+        }
+
+        self.environment = previous;
+    }
 }
 
 fn is_truthy(value: &Value) -> bool {
@@ -56,6 +68,13 @@ fn is_equal(left: &Value, right: &Value) -> bool {
 }
 
 impl StmtVisitor<()> for Interpreter {
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) {
+        self.execute_block(
+            &stmt.statements,
+            Environment::from(self.environment.clone()),
+        );
+    }
+
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) {
         match self.evaluate(&stmt.expression) {
             Ok(_) => {}

@@ -20,7 +20,7 @@ pub fn run(args: Vec<String>) {
     }
 
     if args.len() == 2 {
-        run_file(args[0].clone());
+        run_file(args[1].clone());
     } else {
         run_prompt();
     }

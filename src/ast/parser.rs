@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     expr::{AssignExpr, BinaryExpr, Expr, UnaryExpr, VariableExpr},
-    statement::{ExpressionStmt, PrintStmt, Stmt, VarStmt},
+    statement::{BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt},
 };
 
 pub struct Parser {
@@ -37,6 +37,13 @@ impl Parser {
             return self.print_statement();
         }
 
+        if self.match_token(&[TokenType::LeftBrace]) {
+            match self.block() {
+                Ok(block) => return Ok(Stmt::Block(BlockStmt::new(block))),
+                Err(e) => return Err(e),
+            }
+        }
+
         self.expression_statement()
     }
 
@@ -62,6 +69,23 @@ impl Parser {
 
             self.advance();
         }
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, ParseError> {
+        let mut statements = Vec::new();
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            if let Some(stmt) = self.declaration() {
+                statements.push(stmt);
+            }
+        }
+
+        match self.consume(TokenType::RightBrace, "Expect '}' after block.") {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        };
+
+        Ok(statements)
     }
 
     fn declaration(&mut self) -> Option<Stmt> {
