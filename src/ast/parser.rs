@@ -87,9 +87,7 @@ impl Parser {
             }
         }
 
-        if let Err(e) = self.consume(TokenType::RightBrace, "Expect '}' after block.") {
-            return Err(e);
-        };
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
 
         Ok(statements)
     }
@@ -390,10 +388,7 @@ impl Parser {
                 Err(err) => return Err(err),
             };
 
-            if let Err(err) = self.consume(TokenType::RightParen, "Expected ')' after expression.")
-            {
-                return Err(err);
-            }
+            self.consume(TokenType::RightParen, "Expected ')' after expression.")?;
 
             return Ok(Expr::Grouping(GroupingExpr::new(expr)));
         }
