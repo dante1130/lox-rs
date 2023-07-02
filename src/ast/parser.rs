@@ -24,9 +24,8 @@ impl Parser {
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
-            match self.declaration() {
-                Ok(stmt) => statements.push(stmt),
-                Err(e) => {}
+            if let Ok(stmt) = self.declaration() {
+                statements.push(stmt)
             }
         }
 
