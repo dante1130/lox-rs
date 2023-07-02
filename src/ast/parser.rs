@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     expr::{AssignExpr, BinaryExpr, Expr, UnaryExpr, VariableExpr},
-    statement::{BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt},
+    statement::{BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt},
 };
 
 pub struct Parser {
@@ -83,9 +83,8 @@ impl Parser {
             }
         }
 
-        match self.consume(TokenType::RightBrace, "Expect '}' after block.") {
-            Ok(_) => {}
-            Err(e) => return Err(e),
+        if let Err(e) = self.consume(TokenType::RightBrace, "Expect '}' after block.") {
+            return Err(e);
         };
 
         Ok(statements)
@@ -143,6 +142,37 @@ impl Parser {
             Ok(_) => Ok(Stmt::Print(PrintStmt::new(expr))),
             Err(err) => Err(err),
         }
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, ParseError> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
+        let condition = match self.expression() {
+            Ok(expr) => expr,
+            Err(err) => return Err(err),
+        };
+        self.consume(TokenType::RightParen, "Expect ')' after 'if' condition.")?;
+
+        self.consume(TokenType::LeftBrace, "Expect '{' before 'then' body.")?;
+        let then_branch = match self.statement() {
+            Ok(stmt) => stmt,
+            Err(err) => return Err(err),
+        };
+        self.consume(TokenType::RightBrace, "Expect '}' after 'then' body.")?;
+
+        let else_branch = if self.match_token(&[TokenType::Else]) {
+            self.consume(TokenType::LeftBrace, "Expect '{' before 'else' body.")?;
+            let else_branch = match self.statement() {
+                Ok(stmt) => Some(stmt),
+                Err(err) => return Err(err),
+            };
+            self.consume(TokenType::RightBrace, "Expect '}' after 'else' body.")?;
+
+            else_branch
+        } else {
+            None
+        };
+
+        Ok(Stmt::If(IfStmt::new(condition, then_branch, else_branch)))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
@@ -308,9 +338,9 @@ impl Parser {
                 Err(err) => return Err(err),
             };
 
-            match self.consume(TokenType::RightParen, "Expected ')' after expression.") {
-                Ok(_) => {}
-                Err(err) => return Err(err),
+            if let Err(err) = self.consume(TokenType::RightParen, "Expected ')' after expression.")
+            {
+                return Err(err);
             }
 
             return Ok(Expr::Grouping(GroupingExpr::new(expr)));

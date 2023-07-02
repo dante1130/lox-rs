@@ -1,10 +1,11 @@
-use crate::{stmt_visitor::StmtVisitor, lexer::token::Token};
+use crate::{lexer::token::Token, stmt_visitor::StmtVisitor};
 
 use super::expr::Expr;
 
 pub enum Stmt {
     Block(BlockStmt),
     Expression(ExpressionStmt),
+    If(IfStmt),
     Print(PrintStmt),
     Var(VarStmt),
 }
@@ -14,6 +15,7 @@ impl Stmt {
         match self {
             Stmt::Block(stmt) => visitor.visit_block_stmt(stmt),
             Stmt::Expression(stmt) => visitor.visit_expression_stmt(stmt),
+            Stmt::If(stmt) => visitor.visit_if_stmt(stmt),
             Stmt::Print(stmt) => visitor.visit_print_stmt(stmt),
             Stmt::Var(stmt) => visitor.visit_var_stmt(stmt),
         }
@@ -26,6 +28,12 @@ pub struct BlockStmt {
 
 pub struct ExpressionStmt {
     pub expression: Expr,
+}
+
+pub struct IfStmt {
+    pub condition: Expr,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>,
 }
 
 pub struct PrintStmt {
@@ -46,6 +54,16 @@ impl BlockStmt {
 impl ExpressionStmt {
     pub fn new(expression: Expr) -> Self {
         Self { expression }
+    }
+}
+
+impl IfStmt {
+    pub fn new(condition: Expr, then_branch: Stmt, else_branch: Option<Stmt>) -> Self {
+        Self {
+            condition,
+            then_branch: Box::new(then_branch),
+            else_branch: else_branch.map(Box::new),
+        }
     }
 }
 
@@ -70,6 +88,12 @@ impl From<BlockStmt> for Stmt {
 impl From<ExpressionStmt> for Stmt {
     fn from(statement: ExpressionStmt) -> Self {
         Stmt::Expression(statement)
+    }
+}
+
+impl From<IfStmt> for Stmt {
+    fn from(statement: IfStmt) -> Self {
+        Stmt::If(statement)
     }
 }
 

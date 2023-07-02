@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
-        statement::{BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt},
+        statement::{BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt},
     },
     environment::Environment,
     error::RuntimeError,
@@ -76,8 +76,20 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_expression_stmt(&mut self, stmt: &ExpressionStmt) {
-        match self.evaluate(&stmt.expression) {
-            Ok(_) => {}
+        if let Err(e) = self.evaluate(&stmt.expression) {
+            println!("{}", e)
+        }
+    }
+
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) {
+        match self.evaluate(&stmt.condition) {
+            Ok(value) => {
+                if is_truthy(&value) {
+                    self.execute(&stmt.then_branch);
+                } else if let Some(else_branch) = &stmt.else_branch {
+                    self.execute(else_branch);
+                }
+            }
             Err(e) => println!("{}", e),
         }
     }
