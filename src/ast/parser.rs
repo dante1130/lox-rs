@@ -24,8 +24,9 @@ impl Parser {
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
-            if let Some(stmt) = self.declaration() {
-                statements.push(stmt)
+            match self.declaration() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => {}
             }
         }
 
@@ -75,8 +76,11 @@ impl Parser {
         let mut statements = Vec::new();
 
         while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
-            if let Some(stmt) = self.declaration() {
-                statements.push(stmt);
+            match self.declaration() {
+                Ok(declaration) => statements.push(declaration),
+                Err(e) => {
+                    return Err(e);
+                }
             }
         }
 
@@ -88,19 +92,16 @@ impl Parser {
         Ok(statements)
     }
 
-    fn declaration(&mut self) -> Option<Stmt> {
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
         if self.match_token(&[TokenType::Var]) {
-            return match self.var_declaration() {
-                Ok(stmt) => Some(stmt),
-                Err(_) => None,
-            };
+            return self.var_declaration();
         }
 
         match self.statement() {
-            Ok(stmt) => Some(stmt),
-            Err(_) => {
+            Ok(stmt) => Ok(stmt),
+            Err(err) => {
                 self.synchronize();
-                None
+                Err(err)
             }
         }
     }
@@ -110,6 +111,10 @@ impl Parser {
             Ok(token) => token.clone(),
             Err(err) => return Err(err),
         };
+
+        if self.match_token(&[TokenType::Semicolon]) {
+            return Err(self.error(&name, "Variable declaration must be initialized."));
+        }
 
         let initializer = if self.match_token(&[TokenType::Equal]) {
             Some(match self.expression() {
